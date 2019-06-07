@@ -1,7 +1,13 @@
 const express = require('express')
 const router = express.Router()
 
-router.post('/create', (req, res) => {
+router.post('/createContainer', (req, res) => {
+  console.log('recieve');
+  res.send('okay')
+})
+
+router.get('/test', (req, res) => {
+  console.log('recieve');
   res.send('okay')
 })
 

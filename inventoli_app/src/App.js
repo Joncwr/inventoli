@@ -8,6 +8,11 @@ import Home from './component/Home'
 import Create from './component/Create'
 import Modal from './component/common/Modal'
 import Snackbar from './component/common/Snackbar'
+import Fade from './component/common/Fade'
+import LoadingIndicator from './component/common/LoadingIndicator'
+import LoadFetch from './services/common/LoadFetch'
+
+let loadingIndicatorDestroyTimer
 
 class SettingsScreen extends React.Component {
   render() {
@@ -63,6 +68,8 @@ export default class App extends React.Component {
       snackbarFunction: null,
       snackbarButtonColor: '',
       tag: {techTypes: Array(1), id: "4B701085"},
+      loadingIndicatorMethod: 'hide',
+      fadeAnimation: false,
       owners: [
         {
           name: 'Not Sure'
@@ -118,8 +125,10 @@ export default class App extends React.Component {
       ]
     }
     this.toggleSnackbar=this.toggleSnackbar.bind(this)
+    this.loadingIndicatorChanged = this.loadingIndicatorChanged.bind(this)
 
     SnackbarHelper.setToggleSnackbar(this.toggleSnackbar)
+    LoadFetch.setLoader(this.loadingIndicatorChanged)
   }
 
   componentDidMount() {
@@ -153,9 +162,33 @@ export default class App extends React.Component {
     })
   }
 
+  loadingIndicatorChanged(method){
+    clearTimeout(loadingIndicatorDestroyTimer)
+    if (method === 'show') {
+      this.setState({loadingIndicatorMethod: method, fadeAnimation: true})
+    }
+    else if (method === 'hide') {
+      loadingIndicatorDestroyTimer = setTimeout(() => {
+        this.setState({fadeAnimation: false})
+        loadingIndicatorDestroyTimer = setTimeout(() => {
+          this.setState({loadingIndicatorMethod: method})
+        }, 150)
+      }, 350)
+    }
+  }
+
   render() {
     return (
       <View style={{flex: 1, backgroundColor: 'white'}}>
+        <Fade visible={this.state.fadeAnimation}>
+          {(this.state.loadingIndicatorMethod === 'hide') ?
+            null
+          :
+          <LoadingIndicator
+            loadingStatus={this.state.loadingIndicatorMethod}
+            />
+          }
+        </Fade>
         <View style={styles.snackbar} pointerEvents="none">
           {this.state.showSnackbar ?
             <Snackbar

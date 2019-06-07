@@ -6,6 +6,7 @@ import CustomTextInput from '../common/CustomTextInput'
 import Button from '../common/Button'
 import ObjectHelper from '../../common/helpers/ObjectHelper'
 import SnackbarHelper from '../../common/helpers/SnackbarHelper'
+import StorageApi from '../../services/storage/StorageApi'
 
 export default class Home extends Component {
   constructor(){
@@ -272,9 +273,28 @@ export default class Home extends Component {
   }
 
   onSubmit() {
-    if (!this.validate()) return
+    // if (!this.validate()) return
 
-    console.log('hi');
+    let createContainerDict = {
+      rfid_tag: this.props.screenProps.tag.id,
+      items: this.state.items
+    }
+
+    // StorageApi.createContainer(createContainerDict)
+    // .then(res => {
+    //   console.log(res);
+    // })
+    // .catch(err => {
+    //   console.log(err);
+    // })
+    StorageApi.test()
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    console.log(createContainerDict);
   }
 
   render() {
