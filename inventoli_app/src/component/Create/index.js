@@ -1,10 +1,11 @@
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View, ScrollView, TouchableOpacity} from 'react-native';
+import {Platform, StyleSheet, Text, View, ScrollView, TouchableOpacity, Picker, TextInput, Image} from 'react-native';
 import Swipeout from 'react-native-swipeout';
 
-import TextInput from '../common/TextInput'
+import CustomTextInput from '../common/CustomTextInput'
 import Button from '../common/Button'
 import ObjectHelper from '../../common/helpers/ObjectHelper'
+import SnackbarHelper from '../../common/helpers/SnackbarHelper'
 
 export default class Home extends Component {
   constructor(){
@@ -14,22 +15,35 @@ export default class Home extends Component {
       location: '',
       items: [
         {
-
+          owner: {},
+          categories: [],
+          certainty: '',
+          images: [],
+          description: ''
         },
       ],
     }
     this.onChangeText=this.onChangeText.bind(this)
     this.itemOptions=this.itemOptions.bind(this)
+    this.addCategory=this.addCategory.bind(this)
   }
 
-  onChangeText(event, name) {
-    this.setState({[name]: event})
+  onChangeText(event, name, index) {
+    if (typeof index === 'number') {
+      let items = Object.assign([], this.state.items)
+      let item = items[index]
+      item['description'] = event
+      this.setState({items})
+    }
+    else {
+      this.setState({[name]: event})
+    }
   }
 
   renderTag() {
     if (!ObjectHelper.isEmpty(this.props.screenProps.tag)) {
       return (
-        <View style={{flexDirection: 'row', paddingHorizontal: 4}}>
+        <View style={{flexDirection: 'row', paddingHorizontal: 4, marginTop: 10}}>
           <Text style={{fontSize: 20}} numberOfLines={1} ellipsizeMode='tail'>
             RFID Tag ID:
           </Text>
@@ -48,6 +62,101 @@ export default class Home extends Component {
     }
   }
 
+  renderPicker(index, option) {
+    let items = Object.assign([], this.state.items)
+    let item = items[index]
+    if (option === 'owner') {
+      let screenProps = Object.assign({}, this.props.screenProps)
+      if (!ObjectHelper.isEmpty(screenProps.owners)) {
+        if (screenProps.owners.length > 0) {
+          let owners = []
+          screenProps.owners.forEach((data, index) => {
+            owners.push(
+              <Picker.Item key={index} label={data.name} value={data.name}/>
+            )
+          })
+
+          return (
+            <Picker
+              selectedValue={item.owner.name}
+              onValueChange={(itemValue, itemIndex) => {
+                // CHANGE ID WHEN DB INTERGRATED
+                item['owner'] = {name: itemValue, id: 1}
+                this.setState({items})
+              }}>
+              {owners}
+            </Picker>
+          )
+        }
+      }
+    }
+    else if (option === 'certainty') {
+      return (
+        <Picker
+          selectedValue={item.certainty}
+          onValueChange={(itemValue, itemIndex) => {
+            // CHANGE ID WHEN DB INTERGRATED
+            item['certainty'] = itemValue
+            this.setState({items})
+          }}>
+          <Picker.Item label='Please Select' value={null}/>
+          <Picker.Item label='Certain' value='certain'/>
+          <Picker.Item label='Uncertain' value='uncertain'/>
+          <Picker.Item label='No Clue' value='noclue'/>
+        </Picker>
+      )
+    }
+  }
+
+  renderCategories(index) {
+    let screenProps = Object.assign({}, this.props.screenProps)
+    if (!ObjectHelper.isEmpty(screenProps.categories)) {
+      if (screenProps.categories.length > 0) {
+        let renderCategories = []
+        let items = Object.assign([], this.state.items)
+        let categories = items[index].categories
+        screenProps.categories.forEach((data,catIndex) => {
+          let selected
+          let color = '#e6e6e6'
+          if (categories.length > 0) {
+            categories.forEach(category => {
+              if (category === data.category) {
+                selected = true
+              }
+            })
+          }
+          if (selected) color = data.color
+          renderCategories.push(
+            <TouchableOpacity key={catIndex} activeOpacity={0.7} onPress={() => this.addCategory(data, index)} style={[styles.categoryItem, {backgroundColor: color}]}>
+              <Text style={{fontWeight: '500'}} numberOfLines={1} ellipsizeMode='tail'>
+                {data.category}
+              </Text>
+            </TouchableOpacity>
+          )
+        })
+        return renderCategories
+      }
+    }
+  }
+
+  addCategory(category, index) {
+    let items = Object.assign([], this.state.items)
+    let categories = items[index].categories
+    let method = 'add'
+    let catIndex
+    categories.forEach((data,index) => {
+      if (category.category === data) {
+        method = 'delete'
+        catIndex = index
+      }
+    })
+    if (method === 'add') {
+      categories.push(category.category)
+    }
+    else if (method === 'delete') categories.splice(catIndex, 1)
+    this.setState({items})
+  }
+
   renderItems() {
     let renderItems = []
     for (let i = 0; i < this.state.items.length; i++) {
@@ -55,7 +164,57 @@ export default class Home extends Component {
       renderItems.push(
         <Swipeout style={{marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#e6e6e6', borderTopWidth: 1, borderTopColor: '#f2f2f2',}} right={swipeoutBtns} key={i}>
           <View style={styles.item}>
-
+            <View style={styles.itemRow}>
+              <Text style={styles.itemHeader} numberOfLines={1} ellipsizeMode='tail'>
+                Owner:
+              </Text>
+              <View style={styles.itemMain}>
+                {this.renderPicker(i, 'owner')}
+              </View>
+            </View>
+            <View style={[styles.categoryRow]}>
+              <Text style={[styles.itemHeader, {alignSelf: 'flex-start', marginTop:5}]} numberOfLines={1} ellipsizeMode='tail'>
+                Categories:
+              </Text>
+              <View style={styles.categoryMain}>
+                {this.renderCategories(i)}
+              </View>
+            </View>
+            <View style={styles.itemRow}>
+              <Text style={styles.itemHeader} numberOfLines={1} ellipsizeMode='tail'>
+                Certainty:
+              </Text>
+              <View style={styles.itemMain}>
+                {this.renderPicker(i, 'certainty')}
+              </View>
+            </View>
+            <View style={styles.itemRow}>
+              <Text style={styles.itemHeader} numberOfLines={1} ellipsizeMode='tail'>
+                Images:
+              </Text>
+              <View style={styles.itemMain}>
+                <Text style={{paddingHorizontal: 8}}>
+                  Feature not available yet.
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.itemRow, {height: 60, marginTop: 5}]}>
+              <Text style={[styles.itemHeader, {alignSelf: 'flex-start', marginTop: 8}]} numberOfLines={1} ellipsizeMode='tail'>
+                Description:
+              </Text>
+              <View style={styles.itemMain}>
+               <TextInput
+                style={styles.TextInputStyleClass}
+                value={this.state.items[i].description}
+                onChangeText={(value) => this.onChangeText(value,'description',i)}
+                underlineColorAndroid="transparent"
+                placeholder={"Type Something in Text Area."}
+                placeholderTextColor={"#9E9E9E"}
+                numberOfLines={10}
+                multiline={true}
+              />
+              </View>
+            </View>
           </View>
         </Swipeout>
       )
@@ -67,12 +226,55 @@ export default class Home extends Component {
   itemOptions(option, index) {
     let itemArr = Object.assign([], this.state.items)
     if (option === 'create') {
-      itemArr.push({})
+      itemArr.push(
+        {
+          owner: {},
+          categories: [],
+          certainty: '',
+          images: [],
+          description: ''
+        }
+      )
     }
     else if (option === 'delete') {
       itemArr.splice(index, 1)
     }
     this.setState({items: itemArr})
+  }
+
+  validate() {
+    let tag = Object.assign({}, this.props.screenProps.tag)
+    if (ObjectHelper.isEmpty(tag)) {
+      SnackbarHelper.toggle('Error. Please scan a RFID tag.')
+      return false
+    }
+
+    let items = Object.assign([], this.state.items)
+    let categoryCheck = true
+    let descriptionCheck = true
+    items.forEach(data => {
+      if (data.categories.length == 0) {
+        categoryCheck = false
+      }
+      if (!data.description) {
+        descriptionCheck = false
+      }
+    })
+    if (!categoryCheck) {
+      SnackbarHelper.toggle('Error. Please choose a at least 1 category for any item.')
+      return false
+    }
+    else if (!descriptionCheck) {
+      SnackbarHelper.toggle('Error. Please write a description for any item.')
+      return false
+    }
+    return true
+  }
+
+  onSubmit() {
+    if (!this.validate()) return
+
+    console.log('hi');
   }
 
   render() {
@@ -83,12 +285,14 @@ export default class Home extends Component {
             Container
           </Text>
           <View style={styles.containerDetailsContainer}>
-            <View style={styles.image}>
-
-            </View>
+            <Image
+              source={require('../../assets/img/graphic_container.png')}
+              style={styles.image}
+              resizeMode='cover'
+            />
             <View style={styles.containerDetails}>
               {this.renderTag()}
-              <TextInput
+              <CustomTextInput
                 onChangeText={this.onChangeText.bind(this)}
                 placeholder={'Enter Location Here'}
                 keyboard={'default'}
@@ -100,7 +304,7 @@ export default class Home extends Component {
           </View>
         </View>
         <View style={styles.mainContainer}>
-          <ScrollView contentContainerStyle={{flex: 1,paddingVertical: 20}}>
+          <ScrollView contentContainerStyle={{paddingVertical: 20}}>
             <View style={styles.mainHeader}>
               <Text style={styles.header} numberOfLines={1} ellipsizeMode='tail'>
                 Items
@@ -119,11 +323,11 @@ export default class Home extends Component {
             <View style={styles.createItem}>
               <Button
                 theme={{
-                  fillColor: '#99ffcc',
+                  fillColor: '#99ccff',
                   textColor: '#4c4c4c'
                 }}
                 text="Add Container"
-                function={() => this.itemOptions('create')}
+                function={() => this.onSubmit()}
               />
             </View>
           </ScrollView>
@@ -154,17 +358,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  image: {
+    height: 70,
+    width: 70,
+    marginHorizontal: 12,
+  },
   containerDetails: {
     flex: 1,
     alignItems: 'flex-start',
     justifyContent: 'center',
     paddingHorizontal: 10,
-  },
-  image: {
-    height: 80,
-    width: 80,
-    borderRadius: 20,
-    backgroundColor: 'lightblue',
   },
   header: {
     color: '#4c4c4c',
@@ -172,7 +375,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   mainContainer: {
-    flex: 3,
+    flex: 4,
     width: '100%',
     backgroundColor: 'rgba(242, 242, 242, .5)',
   },
@@ -193,8 +396,59 @@ const styles = StyleSheet.create({
   },
   item: {
     width: '100%',
-    height: 100,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     backgroundColor: '#fff',
+  },
+  itemRow: {
+    height: 40,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+    // backgroundColor: 'red',
+  },
+  itemHeader: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  itemMain: {
+    flex: 3,
+    marginLeft: 20,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  categoryMain: {
+    flex: 3,
+    height: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginLeft: 20,
+  },
+  categoryRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+    // backgroundColor: 'red',
+  },
+  categoryItem: {
+    height: 25,
+    marginHorizontal: 2.5,
+    marginVertical: 2.5,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+    justifyContent: 'center',
+  },
+  TextInputStyleClass: {
+    height: 60,
+    borderWidth: 2,
+    borderColor: '#e6f2ff',
+    borderRadius: 10,
+    textAlignVertical: 'top',
+    paddingHorizontal: 10,
+    backgroundColor : "#FFFFFF",
   },
   createItem: {
     marginTop: 20,
