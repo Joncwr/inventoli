@@ -23,6 +23,7 @@ export default class Home extends Component {
           description: ''
         },
       ],
+      disableButton: false,
     }
     this.onChangeText=this.onChangeText.bind(this)
     this.itemOptions=this.itemOptions.bind(this)
@@ -82,7 +83,7 @@ export default class Home extends Component {
               selectedValue={item.owner.name}
               onValueChange={(itemValue, itemIndex) => {
                 // CHANGE ID WHEN DB INTERGRATED
-                item['owner'] = {name: itemValue, id: 1}
+                item['owner'] = {name: itemValue, id: screenProps.owners[itemIndex].id}
                 this.setState({items})
               }}>
               {owners}
@@ -121,7 +122,7 @@ export default class Home extends Component {
           let color = '#e6e6e6'
           if (categories.length > 0) {
             categories.forEach(category => {
-              if (category === data.category) {
+              if (category.category === data.category) {
                 selected = true
               }
             })
@@ -146,13 +147,13 @@ export default class Home extends Component {
     let method = 'add'
     let catIndex
     categories.forEach((data,index) => {
-      if (category.category === data) {
+      if (category.category === data.category) {
         method = 'delete'
         catIndex = index
       }
     })
     if (method === 'add') {
-      categories.push(category.category)
+      categories.push({category: category.category})
     }
     else if (method === 'delete') categories.splice(catIndex, 1)
     this.setState({items})
@@ -253,6 +254,7 @@ export default class Home extends Component {
     let items = Object.assign([], this.state.items)
     let categoryCheck = true
     let descriptionCheck = true
+    let certaintyCheck = true
     items.forEach(data => {
       if (data.categories.length == 0) {
         categoryCheck = false
@@ -260,9 +262,16 @@ export default class Home extends Component {
       if (!data.description) {
         descriptionCheck = false
       }
+      if (!data.certainty) {
+        certaintyCheck = false
+      }
     })
     if (!categoryCheck) {
-      SnackbarHelper.toggle('Error. Please choose a at least 1 category for any item.')
+      SnackbarHelper.toggle('Error. Please choose at least 1 category for any item.')
+      return false
+    }
+    else if (!certaintyCheck) {
+      SnackbarHelper.toggle('Error. Please choose the certainty for any item.')
       return false
     }
     else if (!descriptionCheck) {
@@ -273,28 +282,46 @@ export default class Home extends Component {
   }
 
   onSubmit() {
-    // if (!this.validate()) return
+    if (!this.validate()) return
 
     let createContainerDict = {
       rfid_tag: this.props.screenProps.tag.id,
       items: this.state.items
     }
 
-    // StorageApi.createContainer(createContainerDict)
+    this.setState({disableButton: true})
+    StorageApi.createContainer(createContainerDict)
+    .then(res => {
+      if (res = 'Container already exists') {
+        SnackbarHelper.toggle('Error. Tag already exists.')
+      }
+      else {
+        this.setState({
+          location: '',
+          items: [
+            {
+              owner: {},
+              categories: [],
+              certainty: '',
+              images: [],
+              description: ''
+            },
+          ],
+          disableButton: false
+        })
+      }
+    })
+    .catch(err => {
+      this.setState({disableButton: false})
+      console.log(err);
+    })
+    // StorageApi.test()
     // .then(res => {
     //   console.log(res);
     // })
     // .catch(err => {
     //   console.log(err);
     // })
-    StorageApi.test()
-    .then(res => {
-      console.log(res);
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    console.log(createContainerDict);
   }
 
   render() {
@@ -347,6 +374,7 @@ export default class Home extends Component {
                   textColor: '#4c4c4c'
                 }}
                 text="Add Container"
+                disabled={this.state.disableButton}
                 function={() => this.onSubmit()}
               />
             </View>

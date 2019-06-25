@@ -3,11 +3,12 @@ import Config from 'react-native-config'
 import { AsyncStorage } from 'react-native'
 
 let jwtFetch = (method, endpoint, json) => {
-  console.log(process.env.REACT_APP_API);
-  console.log('http://192.168.2.230:3001/api/' + endpoint, method);
+  // console.log(process.env.REACT_APP_API);
+  // console.log(Config.API_URL);
+  console.log('http://192.168.2.163:3001/api/' + endpoint, method);
   return new Promise((resolve, reject) => {
     axios({
-      url: 'http://192.168.2.230:3001/api/' + endpoint,
+      url: 'http://192.168.2.163:3001/api/' + endpoint,
       method: method,
       headers: {
         'Content-Type': 'application/json',

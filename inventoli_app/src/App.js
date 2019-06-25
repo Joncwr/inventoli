@@ -11,6 +11,7 @@ import Snackbar from './component/common/Snackbar'
 import Fade from './component/common/Fade'
 import LoadingIndicator from './component/common/LoadingIndicator'
 import LoadFetch from './services/common/LoadFetch'
+import OwnershipApi from './services/ownership/OwnershipApi'
 
 let loadingIndicatorDestroyTimer
 
@@ -26,8 +27,8 @@ class SettingsScreen extends React.Component {
 
 const TabNavigator = createBottomTabNavigator({
   Home: Create,
-  Create: SettingsScreen,
-  Scan: SettingsScreen,
+  Create: Create,
+  Scan: Home,
   Inventory: SettingsScreen,
 });
 
@@ -67,32 +68,10 @@ export default class App extends React.Component {
       snackbarButtonText: '',
       snackbarFunction: null,
       snackbarButtonColor: '',
-      tag: {techTypes: Array(1), id: "4B701085"},
+      tag: {},
       loadingIndicatorMethod: 'hide',
       fadeAnimation: false,
-      owners: [
-        {
-          name: 'Not Sure'
-        },
-        {
-          name: 'Jonathan Chua'
-        },
-        {
-          name: 'David Chua'
-        },
-        {
-          name: 'Sharon Chua'
-        },
-        {
-          name: 'Michelle Chua'
-        },
-        {
-          name: 'Keith Chua'
-        },
-        {
-          name: 'Irene Chua'
-        },
-      ],
+      owners: [],
       categories: [
         {
           category: 'Books',
@@ -132,6 +111,17 @@ export default class App extends React.Component {
   }
 
   componentDidMount() {
+    console.log(process.env.REACT_APP_NOT_SECRET_CODE);
+
+    let house_id = 1
+    OwnershipApi.getOwners(house_id)
+    .then(res => {
+      let emptyArr = [{name: 'Not Sure'}]
+      let owners = emptyArr.concat(res)
+      this.setState({owners})
+    })
+    .catch(err => console.log(err))
+
     NfcManager.registerTagEvent(
       tag => {
         console.log('Tag Discovered', tag);
