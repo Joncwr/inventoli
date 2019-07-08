@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View, TouchableOpacity} from 'react-native';
 
 import StorageApi from '../../services/storage/StorageApi'
 import ObjectHelper from '../../common/helpers/ObjectHelper'
-
+import ImagePicker from 'react-native-image-picker'
 
 export default class Home extends Component {
   constructor(){
@@ -71,12 +71,38 @@ export default class Home extends Component {
     }
   }
 
+  imagePicker() {
+    console.log('hi');
+    const options = {
+      title: 'Select Avatar',
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    }
+
+    ImagePicker.showImagePicker(options, (response) => {
+      console.log('Response = ', response);
+      let file = {
+        uri: response.uri,
+        name: response.fileName,
+        type: 'image/png'
+      }
+      console.log(file);
+    });
+  }
+
   render() {
     return (
       <View style={styles.container}>
         <Text style={styles.welcome}>Hold the tag behind the phone!</Text>
         {this.renderTag()}
         {this.test()}
+        <TouchableOpacity onPress={this.imagePicker.bind(this)}>
+          <Text numberOfLines={1} ellipsizeMode='tail'>
+            Touch Me!
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }

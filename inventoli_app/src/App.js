@@ -6,6 +6,8 @@ import NfcManager, {NfcAdapter} from 'react-native-nfc-manager'
 import SnackbarHelper from './common/helpers/SnackbarHelper'
 import Home from './component/Home'
 import Create from './component/Create'
+import Scan from './component/Scan'
+import Update from './component/Update'
 import Modal from './component/common/Modal'
 import Snackbar from './component/common/Snackbar'
 import Fade from './component/common/Fade'
@@ -28,7 +30,7 @@ class SettingsScreen extends React.Component {
 const TabNavigator = createBottomTabNavigator({
   Home: Create,
   Create: Create,
-  Scan: Home,
+  Scan: Scan,
   Inventory: SettingsScreen,
 });
 
@@ -36,6 +38,9 @@ const MainStack = createStackNavigator(
   {
     Home: {
       screen: TabNavigator,
+    },
+    Update: {
+      screen: Update,
     },
   }
 );
@@ -113,7 +118,7 @@ export default class App extends React.Component {
   componentDidMount() {
     console.log(process.env.REACT_APP_NOT_SECRET_CODE);
 
-    let house_id = 1
+    let house_id = 2
     OwnershipApi.getOwners(house_id)
     .then(res => {
       let emptyArr = [{name: 'Not Sure'}]
@@ -122,34 +127,42 @@ export default class App extends React.Component {
     })
     .catch(err => console.log(err))
 
-    NfcManager.registerTagEvent(
-      tag => {
-        console.log('Tag Discovered', tag);
-        this.setState({tag})
-        //Add Sound.
-      },
-      'Hold your device over the tag',
-      {
-        invalidateAfterFirstRead: true,
-        isReaderModeEnabled: true,
-        readerModeFlags:
-          NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
-      },
-    );
+    // NfcManager.registerTagEvent(
+    //   tag => {
+    //     console.log('Tag Discovered', tag);
+    //     this.setState({tag})
+    //     //Add Sound.
+    //   },
+    //   'Hold your device over the tag',
+    //   {
+    //     invalidateAfterFirstRead: true,
+    //     isReaderModeEnabled: true,
+    //     readerModeFlags:
+    //       NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
+    //   },
+    // );
   }
 
   toggleSnackbar(message, snackbarDuration, snackbarButtonText, snackbarFunction, snackbarButtonColor) {
+    let snackbarTimeout
+    clearTimeout(snackbarTimeout)
+    if (message) {
     let duration = snackbarDuration || 2000
-    if (snackbarButtonText) {
-      this.setState({snackbarButtonText: snackbarButtonText, snackbarFunction: snackbarFunction, snackbarButtonColor: snackbarButtonColor})
-    }
-    this.setState({showSnackbar: !this.state.showSnackbar, snackbarDuration: duration, snackbarMessage: message}, () => {
-      if (this.state.showSnackbar) {
-        setTimeout(() => {
-          this.toggleSnackbar()
-        }, this.state.snackbarDuration + 1500)
+      if (snackbarButtonText) {
+        console.log(snackbarButtonText);
+        this.setState({snackbarButtonText: snackbarButtonText, snackbarFunction: snackbarFunction, snackbarButtonColor: snackbarButtonColor})
       }
-    })
+      this.setState({showSnackbar: true, snackbarDuration: duration, snackbarMessage: message}, () => {
+        if (this.state.showSnackbar) {
+          snackbarTimeout = setTimeout(() => {
+            this.toggleSnackbar()
+          }, this.state.snackbarDuration + 1500)
+        }
+      })
+    }
+    else {
+      this.setState({showSnackbar: false})
+    }
   }
 
   loadingIndicatorChanged(method){

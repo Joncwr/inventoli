@@ -1,9 +1,6 @@
 import React, {Component} from 'react';
 import {Platform, StyleSheet, Text, View, ScrollView, TouchableOpacity, Picker, TextInput, Image} from 'react-native';
 import Swipeout from 'react-native-swipeout';
-import { NavigationEvents } from "react-navigation";
-import NfcManager, {NfcAdapter} from 'react-native-nfc-manager'
-import ImagePicker from 'react-native-image-picker'
 
 import CustomTextInput from '../common/CustomTextInput'
 import Button from '../common/Button'
@@ -16,6 +13,7 @@ export default class Home extends Component {
     super()
 
     this.state = {
+      id: '',
       location: '',
       items: [
         {
@@ -28,11 +26,28 @@ export default class Home extends Component {
       ],
       disableButton: false,
       tag: {},
+      itemsToDelete: [],
     }
     this.onChangeText=this.onChangeText.bind(this)
     this.itemOptions=this.itemOptions.bind(this)
     this.addCategory=this.addCategory.bind(this)
-    this.imagePicker=this.imagePicker.bind(this)
+  }
+
+  componentDidMount() {
+    let container = this.props.navigation.state.params.container
+    if (container.items.length > 0) {
+      container.items.forEach(data => {
+        if (ObjectHelper.isEmpty(data.owner)) {
+          data['owner'] = {name: 'Not Sure'}
+        }
+      })
+    }
+    this.setState({
+      id: container.id,
+      location: container.location,
+      tag: {id: container.rfid_tag},
+      items: container.items
+    })
   }
 
   onChangeText(event, name, index) {
@@ -82,13 +97,13 @@ export default class Home extends Component {
               <Picker.Item key={index} label={data.name} value={data.name}/>
             )
           })
-
           return (
             <Picker
               selectedValue={item.owner.name}
               onValueChange={(itemValue, itemIndex) => {
                 // CHANGE ID WHEN DB INTERGRATED
                 item['owner'] = {name: itemValue, id: screenProps.owners[itemIndex].id}
+                console.log(item);
                 this.setState({items})
               }}>
               {owners}
@@ -195,12 +210,14 @@ export default class Home extends Component {
                 {this.renderPicker(i, 'certainty')}
               </View>
             </View>
-            <View style={styles.itemRowImage}>
+            <View style={styles.itemRow}>
               <Text style={styles.itemHeader} numberOfLines={1} ellipsizeMode='tail'>
                 Images:
               </Text>
               <View style={styles.itemMain}>
-                {this.renderImagePicker(i)}
+                <Text style={{paddingHorizontal: 8}}>
+                  Feature not available yet.
+                </Text>
               </View>
             </View>
             <View style={[styles.itemRow, {height: 60, marginTop: 5}]}>
@@ -228,71 +245,6 @@ export default class Home extends Component {
     return renderItems
   }
 
-  renderImagePicker(index) {
-    let items = Object.assign([], this.state.items)
-    let item = items[index]
-
-    if (item.images.length > 0) {
-      let renderImage = []
-      item.images.forEach((data, index) => {
-        if (data.uri) {
-          renderImage.push(
-            <TouchableOpacity key={index} onPress={() => this.showPictureModal(data)}>
-              <Image
-                style={{height: 40, width: 40}}
-                source={{
-                  uri: data.uri,
-                }}
-              />
-            </TouchableOpacity>
-          )
-        }
-      })
-
-      return renderImage
-    }
-    else {
-      return (
-        <TouchableOpacity onPress={() => this.imagePicker(index)} style={styles.imagePicker} activeOpacity={.7}>
-          <Text style={{fontSize: 18, fontWeight: '500'}} numberOfLines={1} ellipsizeMode='tail'>
-            +
-          </Text>
-        </TouchableOpacity>
-      )
-    }
-  }
-
-  showPictureModal(data) {
-    let modalDict = {
-      modal: 'picture',
-      data: data
-    }
-    this.props.navigation.navigate('MyModal', modalDict)
-  }
-
-  imagePicker(index) {
-    const options = {
-      title: `Please choose the item's picture.`,
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
-    }
-
-    ImagePicker.showImagePicker(options, (response) => {
-      let file = {
-        uri: response.uri,
-        name: response.fileName,
-        type: 'image/png',
-        data: response.data
-      }
-
-      let items = Object.assign([], this.state.items)
-      items[index].images.push(file)
-      this.setState({items})
-    });
-  }
-
   itemOptions(option, index) {
     let itemArr = Object.assign([], this.state.items)
     if (option === 'create') {
@@ -307,6 +259,12 @@ export default class Home extends Component {
       )
     }
     else if (option === 'delete') {
+      if (itemArr[index].id) {
+        let itemsToDelete = Object.assign([], this.state.itemsToDelete)
+        itemsToDelete.push(itemArr[index])
+        this.setState({itemsToDelete})
+      }
+      console.log(this.state.itemsToDelete);
       itemArr.splice(index, 1)
     }
     this.setState({items: itemArr})
@@ -350,75 +308,33 @@ export default class Home extends Component {
   }
 
   onSubmit() {
-    if (!this.state.disableButton) {
-      if (!this.validate()) return
+    if (!this.validate()) return
 
-      let createContainerDict = {
-        rfid_tag: this.state.tag.id,
-        items: this.state.items
-      }
-      this.setState({disableButton: true}, () => {
-        StorageApi.createContainer(createContainerDict)
-        .then(res => {
-          console.log(res);
-          if (res === 'Container already exists') {
-            SnackbarHelper.toggle('Error. Tag already exists.')
-          }
-          else {
-            SnackbarHelper.toggle('Container sucessfully created.')
-            this.setState({
-              tag: {},
-              location: '',
-              items: [
-                {
-                  owner: {},
-                  categories: [],
-                  certainty: '',
-                  images: [],
-                  description: ''
-                },
-              ],
-              disableButton: false
-            })
-          }
-        })
-        .catch(err => {
-          this.setState({disableButton: false})
-          console.log(err);
-        })
-        // StorageApi.test()
-        // .then(res => {
-        //   console.log(res);
-        // })
-        // .catch(err => {
-        //   console.log(err);
-        // })
-      })
+    let updateContainerDict = {
+      id: this.state.id,
+      rfid_tag: this.state.tag.id,
+      location: this.state.location,
+      items: this.state.items
     }
+
+    if (this.state.itemsToDelete.length > 0) {
+      updateContainerDict['itemsToDelete'] = this.state.itemsToDelete
+    }
+
+    StorageApi.updateContainer(updateContainerDict)
+    .then(res => {
+      SnackbarHelper.toggle('Container successfully updated.')
+      this.props.navigation.state.params.readTag({id: this.state.tag.id})
+      this.props.navigation.goBack()
+    })
+    .catch(err => {
+      SnackbarHelper.toggle('Unable to update. Please refresh')
+    })
   }
 
   render() {
     return (
       <View style={styles.container}>
-        <NavigationEvents
-          onWillFocus={payload => {
-            NfcManager.unregisterTagEvent()
-            NfcManager.registerTagEvent(
-              tag => {
-                console.log('Tag Discovered', tag);
-                this.setState({tag})
-                //Add Sound.
-              },
-              'Hold your device over the tag',
-              {
-                invalidateAfterFirstRead: true,
-                isReaderModeEnabled: true,
-                readerModeFlags:
-                  NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
-              },
-            );
-          }}
-        />
         <View style={styles.topContainer}>
           <Text style={styles.header} numberOfLines={1} ellipsizeMode='tail'>
             Container
@@ -465,7 +381,7 @@ export default class Home extends Component {
                   fillColor: '#99ccff',
                   textColor: '#4c4c4c'
                 }}
-                text="Add Container"
+                text="Update Container"
                 disabled={this.state.disableButton}
                 function={() => this.onSubmit()}
               />
@@ -548,13 +464,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     // backgroundColor: 'red',
   },
-  itemRowImage: {
-    height: 60,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
   itemHeader: {
     flex: 1,
     fontSize: 16,
@@ -600,13 +509,5 @@ const styles = StyleSheet.create({
   createItem: {
     marginTop: 20,
     paddingHorizontal: 30,
-  },
-  imagePicker: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#b3ffff',
   },
 });

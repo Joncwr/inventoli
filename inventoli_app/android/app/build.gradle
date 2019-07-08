@@ -1,5 +1,8 @@
 apply plugin: "com.android.application"
 
+// 2nd line, add a new apply:
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
+
 import com.android.build.OutputFile
 
 /**
@@ -138,6 +141,8 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-config')
+    implementation project(':react-native-image-picker')
     implementation project(':react-native-nfc-manager')
     implementation project(':react-native-gesture-handler')
     implementation fileTree(dir: "libs", include: ["*.jar"])

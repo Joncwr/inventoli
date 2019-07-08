@@ -1,16 +1,32 @@
 import React, {Component} from 'react';
 import {Platform, StyleSheet, Text, View, Button} from 'react-native';
 
-export default class Home extends Component {
+import ObjectHelper from '../../../common/helpers/ObjectHelper'
+import Picture from './Picture'
+
+export default class Modal extends Component {
+  renderComponent() {
+    let params = this.props.navigation.state.params
+    if (!ObjectHelper.isEmpty(params)) {
+      let component
+      if(params.modal){
+        switch (params.modal) {
+          case 'picture':
+            component = <Picture goBack={this.props.navigation.goBack} data={params.data}/>
+            break
+          default:
+            component = <View />
+        }
+
+        return component
+      }
+    }
+  }
+
   render() {
-    console.log(this.props);
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 30 }}>This is a modal!</Text>
-        <Button
-          onPress={() => this.props.navigation.goBack()}
-          title="Dismiss"
-        />
+        {this.renderComponent()}
       </View>
     );
   }

@@ -9,6 +9,12 @@ module.exports = {
   getContainer: (rfid_tag) => {
     return LoadFetch.loadFetch('get', 'storage/getContainer/' + rfid_tag)
   },
+  updateLocation: (locationDict) => {
+    return LoadFetch.loadFetch('put', 'storage/updateLocation', locationDict)
+  },
+  updateContainer: (updateContainerDict) => {
+    return LoadFetch.loadFetch('put', 'storage/updateContainer', updateContainerDict)
+  },
   test: () => {
     return LoadFetch.loadFetch('get', 'storage/test')
   },
