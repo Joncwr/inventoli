@@ -4,6 +4,11 @@ import Swipeout from 'react-native-swipeout';
 import { NavigationEvents } from "react-navigation";
 import NfcManager, {NfcAdapter} from 'react-native-nfc-manager'
 import ImagePicker from 'react-native-image-picker'
+import { Auth, Storage } from 'aws-amplify';
+import RNFetchBlob from 'rn-fetch-blob'
+import { Buffer } from 'buffer'
+import moment from 'moment'
+import uuidv4 from 'uuid/v4'
 
 import CustomTextInput from '../common/CustomTextInput'
 import Button from '../common/Button'
@@ -270,6 +275,10 @@ export default class Home extends Component {
     this.props.navigation.navigate('MyModal', modalDict)
   }
 
+  readFile(filePath) {
+    return RNFetchBlob.fs.readFile(filePath, 'base64').then(data => new Buffer(data, 'base64'));
+  }
+
   imagePicker(index) {
     const options = {
       title: `Please choose the item's picture.`,
@@ -277,14 +286,14 @@ export default class Home extends Component {
         skipBackup: true,
         path: 'images',
       },
+      quality: 0.2,
     }
 
     ImagePicker.showImagePicker(options, (response) => {
       let file = {
         uri: response.uri,
-        name: response.fileName,
-        type: 'image/png',
-        data: response.data
+        name: uuidv4() + '.jpg',
+        type: 'image/jpeg',
       }
 
       let items = Object.assign([], this.state.items)
@@ -352,7 +361,6 @@ export default class Home extends Component {
   onSubmit() {
     if (!this.state.disableButton) {
       if (!this.validate()) return
-
       let createContainerDict = {
         rfid_tag: this.state.tag.id,
         items: this.state.items
@@ -360,12 +368,25 @@ export default class Home extends Component {
       this.setState({disableButton: true}, () => {
         StorageApi.createContainer(createContainerDict)
         .then(res => {
-          console.log(res);
           if (res === 'Container already exists') {
             SnackbarHelper.toggle('Error. Tag already exists.')
           }
           else {
             SnackbarHelper.toggle('Container sucessfully created.')
+            this.state.items.forEach(data => {
+              if (data.images.length > 0) {
+                data.images.forEach(images => {
+                  this.readFile(images.uri).then(buffer => {
+                    Storage.put(images.name, buffer, {
+                      contentType: 'image/jpeg'
+                    })
+                    .then (result => console.log(result))
+                  })
+                  .catch(err => console.log(err));
+                })
+              }
+            })
+
             this.setState({
               tag: {},
               location: '',

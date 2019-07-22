@@ -1,0 +1,14 @@
+{
+	"auth": {
+		"inventoliapp830785cf": {
+			"service": "Cognito",
+			"providerPlugin": "awscloudformation"
+		}
+	},
+	"storage": {
+		"name": {
+			"service": "S3",
+			"providerPlugin": "awscloudformation"
+		}
+	}
+}

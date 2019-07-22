@@ -15,6 +15,10 @@ import LoadingIndicator from './component/common/LoadingIndicator'
 import LoadFetch from './services/common/LoadFetch'
 import OwnershipApi from './services/ownership/OwnershipApi'
 
+import Amplify, { Auth } from 'aws-amplify';
+import awsConfig from './services/aws/services';
+Amplify.configure(awsConfig);
+
 let loadingIndicatorDestroyTimer
 
 class SettingsScreen extends React.Component {
@@ -28,7 +32,7 @@ class SettingsScreen extends React.Component {
 }
 
 const TabNavigator = createBottomTabNavigator({
-  Home: Create,
+  Home: Home,
   Create: Create,
   Scan: Scan,
   Inventory: SettingsScreen,

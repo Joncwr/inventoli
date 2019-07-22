@@ -1,0 +1,13 @@
+{
+    "projectName": "inventoli_app",
+    "version": "2.0",
+    "frontend": "android",
+    "android": {
+        "config": {
+            "ResDir": "android/app/src/main/res"
+        }
+    },
+    "providers": [
+        "awscloudformation"
+    ]
+}

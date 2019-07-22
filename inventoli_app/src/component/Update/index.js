@@ -1,6 +1,12 @@
 import React, {Component} from 'react';
 import {Platform, StyleSheet, Text, View, ScrollView, TouchableOpacity, Picker, TextInput, Image} from 'react-native';
 import Swipeout from 'react-native-swipeout';
+import ImagePicker from 'react-native-image-picker'
+import { Auth, Storage } from 'aws-amplify';
+import RNFetchBlob from 'rn-fetch-blob'
+import { Buffer } from 'buffer'
+import moment from 'moment'
+import uuidv4 from 'uuid/v4'
 
 import CustomTextInput from '../common/CustomTextInput'
 import Button from '../common/Button'
@@ -215,9 +221,7 @@ export default class Home extends Component {
                 Images:
               </Text>
               <View style={styles.itemMain}>
-                <Text style={{paddingHorizontal: 8}}>
-                  Feature not available yet.
-                </Text>
+                {this.renderImagePicker(i)}
               </View>
             </View>
             <View style={[styles.itemRow, {height: 60, marginTop: 5}]}>
@@ -243,6 +247,86 @@ export default class Home extends Component {
     }
 
     return renderItems
+  }
+
+  showPictureModal(data) {
+    let modalDict = {
+      modal: 'picture',
+      data: data
+    }
+    this.props.navigation.navigate('MyModal', modalDict)
+  }
+
+  readFile(filePath) {
+    return RNFetchBlob.fs.readFile(filePath, 'base64').then(data => new Buffer(data, 'base64'));
+  }
+
+  imagePicker(index) {
+    const options = {
+      title: `Please choose the item's picture.`,
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+      quality: 0.2,
+    }
+
+    ImagePicker.showImagePicker(options, (response) => {
+      let file = {
+        uri: response.uri,
+        name: uuidv4() + '.jpg',
+        type: 'image/jpeg',
+      }
+
+      let items = Object.assign([], this.state.items)
+
+      // change when implement multiple photos!!!
+      items[index].images = [file]
+
+      // items[index].images.push(file)
+      this.setState({items})
+    });
+  }
+
+  renderImagePicker(index) {
+    let items = Object.assign([], this.state.items)
+    let item = items[index]
+
+    if (item.images.length > 0) {
+      let renderImage = []
+      item.images.forEach((data, index) => {
+        if (data.uri) {
+          renderImage.push(
+            <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}} key='imagePicker'>
+              <TouchableOpacity key={index} onPress={() => this.showPictureModal(data)}>
+                <Image
+                  style={{height: 40, width: 40}}
+                  source={{
+                    uri: data.uri,
+                  }}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => this.imagePicker(index)} style={styles.imagePicker} activeOpacity={.7}>
+                <Text style={{fontSize: 14, fontWeight: '500'}} numberOfLines={1} ellipsizeMode='tail'>
+                  Change
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )
+        }
+      })
+
+      return renderImage
+    }
+    else {
+      return (
+        <TouchableOpacity onPress={() => this.imagePicker(index)} style={styles.imagePicker} activeOpacity={.7}>
+          <Text style={{fontSize: 18, fontWeight: '500'}} numberOfLines={1} ellipsizeMode='tail'>
+            +
+          </Text>
+        </TouchableOpacity>
+      )
+    }
   }
 
   itemOptions(option, index) {
@@ -324,6 +408,19 @@ export default class Home extends Component {
     StorageApi.updateContainer(updateContainerDict)
     .then(res => {
       SnackbarHelper.toggle('Container successfully updated.')
+      this.state.items.forEach(data => {
+        if (data.images.length > 0) {
+          data.images.forEach(images => {
+            this.readFile(images.uri).then(buffer => {
+              Storage.put(images.name, buffer, {
+                contentType: 'image/jpeg'
+              })
+              .then (result => console.log(result))
+            })
+            .catch(err => console.log(err));
+          })
+        }
+      })
       this.props.navigation.state.params.readTag({id: this.state.tag.id})
       this.props.navigation.goBack()
     })
@@ -509,5 +606,14 @@ const styles = StyleSheet.create({
   createItem: {
     marginTop: 20,
     paddingHorizontal: 30,
+  },
+  imagePicker: {
+    width: 100,
+    height: 30,
+    marginLeft: 15,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#b3ffff',
   },
 });

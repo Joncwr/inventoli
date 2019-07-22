@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
-import { View, StyleSheet, Text } from 'react-native'
+import { View, StyleSheet, Text, TouchableOpacity ,Image } from 'react-native'
+import { Auth, Storage } from 'aws-amplify';
 
 import ObjectHelper from '../../../common/helpers/ObjectHelper'
 
@@ -8,8 +9,24 @@ export default class ItemComponent extends Component {
     super()
 
     this.state = {
-
+      uri: '',
+      images: [],
     }
+  }
+
+  componentDidUpdate() {
+    if (this.props.data.images !== this.state.images) {
+      this.setState({images: this.props.data.images}, () => {
+        // Must change this when theres an array fo images!!!!
+        this.getAwsImage(this.props.data.images[0])
+      })
+    }
+  }
+
+  getAwsImage(imageData) {
+    Storage.get(imageData.name)
+    .then(result => this.setState({uri: result}))
+    .catch(err => console.log(err));
   }
 
   renderOwner() {
@@ -34,6 +51,48 @@ export default class ItemComponent extends Component {
           return 'lightgray'
       }
     }
+  }
+
+  renderImagePicker(imageData) {
+    let renderImage = []
+    if (imageData.length > 0) {
+      imageData.forEach((data,index) => {
+        if (this.state.uri) {
+          renderImage.push(
+            <TouchableOpacity style={{height: 40, width: 40}} key={index} onPress={() => this.showPictureModal(data)}>
+              <Image
+                style={{height: 40, width: 40, backgroundColor: 'gray'}}
+                source={{
+                  uri: this.state.uri,
+                }}
+              />
+            </TouchableOpacity>
+          )
+        }
+        else {
+          renderImage = <Text numberOfLines={1} ellipsizeMode='tail'>
+            Loading ...
+          </Text>
+        }
+      })
+    }
+    else {
+      renderImage.push(
+        <Text numberOfLines={1} ellipsizeMode='tail'>
+          No Image Found.
+        </Text>
+      )
+    }
+
+    return renderImage
+  }
+
+  showPictureModal(data) {
+    let modalDict = {
+      modal: 'picture',
+      data: data
+    }
+    this.props.navigation.navigate('MyModal', modalDict)
   }
 
   renderCategories() {
@@ -95,9 +154,9 @@ export default class ItemComponent extends Component {
           <Text style={styles.header} numberOfLines={1} ellipsizeMode='tail'>
             Images:
           </Text>
-          <Text numberOfLines={1} ellipsizeMode='tail'>
-            Currently not supported.
-          </Text>
+          <View style={styles.itemMain}>
+            {this.renderImagePicker(this.props.data.images)}
+          </View>
         </View>
       </View>
     )
@@ -154,5 +213,12 @@ var styles = StyleSheet.create({
   },
   header: {
     fontWeight: '500',
-  }
+  },
+  itemMain: {
+    flex: 1,
+    marginLeft: 3,
+    marginTop: 1,
+    height: '100%',
+    justifyContent: 'center',
+  },
 })

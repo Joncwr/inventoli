@@ -1,0 +1,19 @@
+{
+    "env": {
+        "awscloudformation": {
+            "AuthRoleName": "inventoliapp-env-20190709140233-authRole",
+            "UnauthRoleArn": "arn:aws:iam::609527677625:role/inventoliapp-env-20190709140233-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::609527677625:role/inventoliapp-env-20190709140233-authRole",
+            "Region": "us-east-2",
+            "DeploymentBucketName": "inventoliapp-env-20190709140233-deployment",
+            "UnauthRoleName": "inventoliapp-env-20190709140233-unauthRole",
+            "StackName": "inventoliapp-env-20190709140233",
+            "StackId": "arn:aws:cloudformation:us-east-2:609527677625:stack/inventoliapp-env-20190709140233/25b9e620-a20f-11e9-957b-06a8021e9aec"
+        },
+        "categories": {
+            "auth": {
+                "inventoliapp830785cf": {}
+            }
+        }
+    }
+}

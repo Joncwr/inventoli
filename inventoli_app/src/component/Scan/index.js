@@ -38,6 +38,7 @@ export default class Home extends Component {
     this.setState({tag},() => {
       StorageApi.getContainer(this.state.tag.id)
       .then(res => {
+        console.log(res);
         this.setState({container: res})
       })
       .catch(err => {
@@ -88,6 +89,7 @@ export default class Home extends Component {
       itemsArr.forEach((data,index) => {
         renderItems.push(
           <ItemComponent
+            navigation={this.props.navigation}
             key={index}
             data={data}
             categories={this.props.screenProps.categories}
@@ -168,11 +170,11 @@ export default class Home extends Component {
                   onPress={() => this.updateLocation()}
                   activeOpacity={0.7}
                 >
-                  <Image
-                    source={require('../../assets/img/icon_upload.png')}
-                    style={{height: '100%', width: '100%'}}
-                    resizeMode='cover'
-                  />
+                <Image
+                  source={require('../../assets/img/icon_upload.png')}
+                  style={{height: '100%', width: '100%'}}
+                  resizeMode='cover'
+                />
                 </TouchableOpacity>
               </View>
             </View>
