@@ -7,6 +7,7 @@ import SnackbarHelper from './common/helpers/SnackbarHelper'
 import Home from './component/Home'
 import Create from './component/Create'
 import Scan from './component/Scan'
+import Inventory from './component/Inventory'
 import Update from './component/Update'
 import Modal from './component/common/Modal'
 import Snackbar from './component/common/Snackbar'
@@ -35,7 +36,7 @@ const TabNavigator = createBottomTabNavigator({
   Home: Home,
   Create: Create,
   Scan: Scan,
-  Inventory: SettingsScreen,
+  Inventory: Inventory,
 });
 
 const MainStack = createStackNavigator(
@@ -71,6 +72,7 @@ export default class App extends React.Component {
     super()
 
     this.state = {
+      houseId: 2,
       showSnackbar: false,
       snackbarDuration: 0,
       snackbarMessage: '',
@@ -120,10 +122,7 @@ export default class App extends React.Component {
   }
 
   componentDidMount() {
-    console.log(process.env.REACT_APP_NOT_SECRET_CODE);
-
-    let house_id = 2
-    OwnershipApi.getOwners(house_id)
+    OwnershipApi.getOwners(this.state.houseId)
     .then(res => {
       let emptyArr = [{name: 'Not Sure'}]
       let owners = emptyArr.concat(res)

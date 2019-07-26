@@ -89,8 +89,8 @@ export default class Home extends Component {
       itemsArr.forEach((data,index) => {
         renderItems.push(
           <ItemComponent
-            navigation={this.props.navigation}
             key={index}
+            navigation={this.props.navigation}
             data={data}
             categories={this.props.screenProps.categories}
           />
@@ -120,6 +120,23 @@ export default class Home extends Component {
     }
   }
 
+  checkNavigationProp() {
+    console.log(this.props.navigation.state.params);
+    if (this.props.navigation.state.params) {
+      console.log('hi');
+      let { containerId } = this.props.navigation.state.params
+      if (containerId) {
+        StorageApi.getContainerById(containerId)
+        .then(res => {
+          let tag = {id: res.rfid_tag}
+          this.readTag(tag)
+          this.props.navigation.setParams({containerId: null})
+        })
+        .catch(err => console.log(err))
+      }
+    }
+  }
+
   render() {
     let location = ''
     if (!ObjectHelper.isEmpty(this.state.container)) location = this.state.container.location
@@ -127,6 +144,7 @@ export default class Home extends Component {
       <View style={styles.container}>
         <NavigationEvents
           onWillFocus={payload => {
+            this.checkNavigationProp()
             NfcManager.unregisterTagEvent()
             NfcManager.registerTagEvent(
               tag => {

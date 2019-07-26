@@ -4,6 +4,7 @@ const ObjectHelper = require('../helpers/ObjectHelper')
 const Containers = require('../models/containers')
 const Items = require('../models/items')
 const Owners_Items = require('../models/owners_items')
+const Houses = require('../models/houses')
 
 router.post('/createContainer', (req, res) => {
   let { rfid_tag, items } = req.body
@@ -177,6 +178,52 @@ router.put('/updateContainer', (req, res) => {
     }
 
     res.sendStatus(200)
+  })
+  .catch(err => {
+    console.log(err)
+    res.sendStatus(400)
+  })
+})
+
+router.get('/getAllItems/:house_id', (req, res) => {
+  let { house_id } = req.params
+  return Houses
+  .query()
+  .eager('owners.items')
+  .then(([houses]) => {
+    let { owners } = houses
+    let items = []
+    owners.forEach(owner => {
+      if (owner.items.length > 0) {
+        owner.items.forEach(item => {
+          let ownerDict = { id: owner.id, name: owner.name }
+          item['owner'] = ownerDict
+          items.push(item)
+        })
+      }
+    })
+    res.send(items)
+  })
+  .catch(err => {
+    res.sendStatus(400)
+    console.log(err)
+  })
+})
+
+router.get('/getContainerById/:container_id', (req, res) => {
+  let { container_id } = req.params
+  return Containers
+  .query()
+  .where({id: container_id})
+  .eager('items.owners')
+  .then(([container]) => {
+    if (container.items.length > 0) {
+      container.items.forEach(data => {
+        data['owner'] = data.owners[0]
+        delete data['owners']
+      })
+    }
+    res.send(container)
   })
   .catch(err => {
     console.log(err)

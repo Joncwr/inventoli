@@ -1,47 +1,9 @@
 import React, { Component } from 'react'
 import { View, StyleSheet, Text, TouchableOpacity ,Image } from 'react-native'
-import { Auth, Storage } from 'aws-amplify';
 
 import ObjectHelper from '../../../common/helpers/ObjectHelper'
 
-export default class ItemComponent extends Component {
-  constructor(){
-    super()
-
-    this.state = {
-      uri: '',
-      images: [],
-    }
-  }
-
-  componentDidUpdate() {
-    if (this.props.data.images !== this.state.images) {
-      this.setState({images: this.props.data.images}, () => {
-        // Must change this when theres an array fo images!!!!
-        if (this.props.data.images.length > 0) {
-          this.getAwsImage(this.props.data.images[0])
-        }
-      })
-    }
-  }
-
-  getAwsImage(imageData) {
-    if (!ObjectHelper.isEmpty(imageData.name)) {
-      Storage.get(imageData.name)
-      .then(result => this.setState({uri: result}))
-      .catch(err => console.log(err));
-    }
-  }
-
-  renderOwner() {
-    if (!ObjectHelper.isEmpty(this.props.data.owner)) {
-      return this.props.data.owner.name
-    }
-    else {
-      return 'No one'
-    }
-  }
-
+export default class InventoryItem extends Component {
   certaintyColor(certainty) {
     if(certainty){
       switch (certainty) {
@@ -57,46 +19,13 @@ export default class ItemComponent extends Component {
     }
   }
 
-  renderImagePicker(imageData) {
-    let renderImage = []
-    if (imageData.length > 0) {
-      imageData.forEach((data,index) => {
-        if (this.state.uri) {
-          renderImage.push(
-            <TouchableOpacity style={{height: 40, width: 40}} key={index} onPress={() => this.showPictureModal(data)}>
-              <Image
-                style={{height: 40, width: 40, backgroundColor: 'gray'}}
-                source={{
-                  uri: this.state.uri,
-                }}
-              />
-            </TouchableOpacity>
-          )
-        }
-        else {
-          renderImage = <Text numberOfLines={1} ellipsizeMode='tail'>
-            Loading ...
-          </Text>
-        }
-      })
+  renderOwner() {
+    if (!ObjectHelper.isEmpty(this.props.data.owner)) {
+      return this.props.data.owner.name
     }
     else {
-      renderImage.push(
-        <Text numberOfLines={1} ellipsizeMode='tail' key='noImage'>
-          No Image Found.
-        </Text>
-      )
+      return 'No one'
     }
-
-    return renderImage
-  }
-
-  showPictureModal(data) {
-    let modalDict = {
-      modal: 'picture',
-      data: data
-    }
-    this.props.navigation.navigate('MyModal', modalDict)
   }
 
   renderCategories() {
@@ -114,7 +43,7 @@ export default class ItemComponent extends Component {
         }
         renderCategories.push(
           <View key={index} activeOpacity={0.7} style={[styles.categoryItem, {backgroundColor: color}]}>
-            <Text style={{fontWeight: '500', fontSize: 14}} numberOfLines={1} ellipsizeMode='tail'>
+            <Text style={{fontWeight: '500', fontSize: 10}} numberOfLines={1} ellipsizeMode='tail'>
               {data.category}
             </Text>
           </View>
@@ -125,16 +54,20 @@ export default class ItemComponent extends Component {
     }
   }
 
+  redirect() {
+    let { container_id } = this.props.data
+    this.props.navigation.navigate('Scan', {containerId: container_id})
+  }
+
   render() {
     return (
-      <View style={styles.container}>
-        <View style={[styles.subContainers, {backgroundColor: 'rgba(0,0,0,.01)', paddingVertical: 5, paddingHorizontal: 20}]}>
+      <TouchableOpacity onPress={this.redirect.bind(this)} activeOpacity={.7} style={styles.container}>
+        <View style={[styles.subContainers, {backgroundColor: 'rgba(0,0,0,.01)', paddingVertical: 2, paddingHorizontal: 15}]}>
           <View style={styles.textContainer}>
             <Text style={styles.label} numberOfLines={1} ellipsizeMode='tail'>
-              {this.renderOwner()}
             </Text>
             <Text style={styles.label} numberOfLines={1} ellipsizeMode='tail'>
-             s Item
+             {this.renderOwner()}s Item
             </Text>
           </View>
           <View style={[styles.certainty, {backgroundColor: this.certaintyColor(this.props.data.certainty)}]}>
@@ -154,15 +87,7 @@ export default class ItemComponent extends Component {
           `{this.props.data.description}`
           </Text>
         </View>
-        <View style={[styles.subContainersNoRow, {paddingHorizontal: 20}]}>
-          <Text style={styles.header} numberOfLines={1} ellipsizeMode='tail'>
-            Images:
-          </Text>
-          <View style={styles.itemMain}>
-            {this.renderImagePicker(this.props.data.images)}
-          </View>
-        </View>
-      </View>
+      </TouchableOpacity>
     )
   }
 }
@@ -170,7 +95,7 @@ export default class ItemComponent extends Component {
 var styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    paddingBottom: 10,
+    paddingBottom: 5,
     marginBottom: 5,
     justifyContent: 'center',
     elevation: 2,
@@ -179,7 +104,7 @@ var styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginBottom: 10,
+    marginBottom: 2,
   },
   subContainersNoRow: {
     justifyContent: 'center',
@@ -189,22 +114,23 @@ var styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontSize: 16,
+    marginLeft: 2,
+    fontSize: 12,
     fontWeight: '500',
   },
   certaintyText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     textTransform: 'capitalize',
   },
   certainty: {
     borderRadius: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     alignSelf: 'flex-end',
   },
   categoryItem: {
-    height: 20,
+    height: 16,
     marginHorizontal: 2.5,
     marginVertical: 2.5,
     paddingHorizontal: 7,
@@ -212,10 +138,11 @@ var styles = StyleSheet.create({
     justifyContent: 'center',
   },
   description: {
-    fontSize: 14,
+    fontSize: 12,
     fontStyle: 'italic',
   },
   header: {
+    fontSize: 12,
     fontWeight: '500',
   },
   itemMain: {

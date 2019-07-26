@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">http://localhost:3001</domain>
+        <domain includeSubdomains="true"> http://ec2-3-14-81-114.us-east-2.compute.amazonaws.com:3001</domain>
     </domain-config>
     <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

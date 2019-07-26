@@ -32,7 +32,7 @@ export default class Home extends Component {
         },
       ],
       disableButton: false,
-      tag: {},
+      tag: {id: 243243},
     }
     this.onChangeText=this.onChangeText.bind(this)
     this.itemOptions=this.itemOptions.bind(this)

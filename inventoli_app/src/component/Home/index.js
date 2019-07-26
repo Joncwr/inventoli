@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View, TouchableOpacity} from 'react-native';
+import {Platform, StyleSheet, Text, View, TouchableOpacity, Image} from 'react-native';
 
 import StorageApi from '../../services/storage/StorageApi'
 import ObjectHelper from '../../common/helpers/ObjectHelper'
@@ -10,99 +10,17 @@ export default class Home extends Component {
     super()
 
     this.state = {
-      tag: '',
-      container: {}
     }
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.screenProps.tag !== this.state.tag) {
-      this.setState({tag: this.props.screenProps.tag}, () => {
-        console.log(this.state.tag);
-        StorageApi.getContainer(this.state.tag.id)
-        .then(res => {
-          this.setState({container: res})
-        })
-        .catch(err => console.log(err))
-      })
-    }
-  }
-
-  renderTag() {
-    if (this.props.screenProps.tag !== {}) {
-      return (
-        <Text numberOfLines={1} ellipsizeMode='tail'>
-          Tag ID is - {this.state.tag.id}
-        </Text>
-      )
-    }
-  }
-
-  test() {
-    if (!ObjectHelper.isEmpty(this.state.container)) {
-      console.log(this.state.container);
-      let { items } = this.state.container
-      let renderItems = []
-      items.forEach((data, index) => {
-        console.log(data);
-        let categories = []
-        data.categories.forEach(data => {
-          categories.push(data.category)
-        })
-        renderItems.push(
-          <View key={index} style={{marginVertical: 20}}>
-            <Text numberOfLines={1} ellipsizeMode='tail'>
-              Item Certainty: {data.certainty}
-            </Text>
-            <Text numberOfLines={1} ellipsizeMode='tail'>
-              Item Description: {data.description}
-            </Text>
-            <Text numberOfLines={1} ellipsizeMode='tail'>
-              Item categories: {categories}
-            </Text>
-          </View>
-        )
-      })
-      return (
-        <View>
-          {renderItems}
-        </View>
-      )
-    }
-  }
-
-  imagePicker() {
-    console.log('hi');
-    const options = {
-      title: 'Select Avatar',
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
-    }
-
-    ImagePicker.showImagePicker(options, (response) => {
-      console.log('Response = ', response);
-      let file = {
-        uri: response.uri,
-        name: response.fileName,
-        type: 'image/png'
-      }
-      console.log(file);
-    });
   }
 
   render() {
     return (
       <View style={styles.container}>
-        <Text style={styles.welcome}>Hold the tag behind the phone!</Text>
-        {this.renderTag()}
-        {this.test()}
-        <TouchableOpacity onPress={this.imagePicker.bind(this)}>
-          <Text numberOfLines={1} ellipsizeMode='tail'>
-            Touch Me!
-          </Text>
-        </TouchableOpacity>
+        <Image
+          style={{width: 400, height: 200}}
+          source={{uri: 'https://media.giphy.com/media/S5JSwmQYHOGMo/200.gif'}}
+        />
+        <Text style={styles.welcome}>Under Construction Nigga!</Text>
       </View>
     );
   }
