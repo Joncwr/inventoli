@@ -72,7 +72,7 @@ export default class App extends React.Component {
     super()
 
     this.state = {
-      houseId: 2,
+      houseId: 1,
       showSnackbar: false,
       snackbarDuration: 0,
       snackbarMessage: '',
